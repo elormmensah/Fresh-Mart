@@ -1,6 +1,6 @@
 // js/api-client.js - Frontend API Client
 // Configuration - CHANGE THIS TO YOUR LARAGON URL
-const API_BASE_URL = 'http://freshmart.test/api'; // For Laragon
+const API_BASE_URL = 'http://https:// freshmartsupermarket.ct.ws/api'; // For Laragon
 // const API_BASE_URL = 'http://localhost/freshmart/api'; // Alternative
 
 // API Helper Functions
