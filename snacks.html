@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket - Shop</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --text-dark: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .cart-status {
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: rgba(46, 125, 50, 0.1);
+        }
+
+        .category-banner {
+            padding: 4rem 5% 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 50px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .product-image {
+            height: 200px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .product-price {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin: 10px 0 20px;
+        }
+
+        .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .add-btn:hover {
+            background-color: #1b5e20;
+        }
+
+        .add-btn.added {
+            background-color: #fb8c00;
+        }
+
+        .logo-link {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 1.5rem;
+        }
+
+        .logo-link:hover {
+            opacity: 0.8;
+        }
+
+        #loader-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2e7d32;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .in-stock {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .low-stock {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .out-of-stock {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+<div id="loader-wrapper">
+    <div class="loader"></div>
+    <p>Loading products...</p>
+</div>
+
+<header>
+    <div class="logo">
+        <a href="supermercado.html" class="logo-link"><strong>FRESH</strong>Mart</a>
+    </div>
+    <nav>
+        <a href="cart.html" class="cart-status">🛒 Cart (<span id="cart-count">0</span>)</a>
+    </nav>
+</header>
+
+<section class="category-banner">
+    <h1 id="category-title">Loading...</h1>
+</section>
+
+<div class="container">
+    <div class="product-grid" id="product-grid">
+        <!-- Products will be loaded here dynamically -->
+    </div>
+</div>
+
+<script src="js/api-client.js"></script>
+<script>
+// Get category from URL parameter or filename
+function getCategorySlug() {
+    // Try to get from URL parameter first
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    if (category) return category;
+    
+    // Otherwise, get from filename (e.g., bakery.html -> bakery)
+    const filename = window.location.pathname.split('/').pop();
+    return filename.replace('.html', '');
+}
+
+// Category display names and emojis
+const categoryInfo = {
+    'bakery': { name: 'Bakery', emoji: '🥖' },
+    'beverages': { name: 'Beverages', emoji: '☕' },
+    'dairy': { name: 'Dairy & Eggs', emoji: '🥚' },
+    'fresh-produce': { name: 'Fresh Produce', emoji: '🥬' },
+    'household': { name: 'Household', emoji: '🧼' },
+    'meat-seafood': { name: 'Meat & Seafood', emoji: '🥩' },
+    'pantry': { name: 'Pantry', emoji: '🌾' },
+    'snacks': { name: 'Snacks', emoji: '🍫' }
+};
+
+// Load products from database
+async function loadProducts() {
+    const categorySlug = getCategorySlug();
+    const info = categoryInfo[categorySlug] || { name: 'Products', emoji: '🛒' };
+    
+    // Update page title
+    document.getElementById('category-title').innerHTML = `${info.emoji} ${info.name}`;
+    document.title = `${info.name} | FreshMart`;
+    
+    try {
+        const response = await API.products.getByCategory(categorySlug);
+        
+        if (response.success && response.products.length > 0) {
+            displayProducts(response.products);
+        } else {
+            showError('No products found in this category.');
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
+        showError('Failed to load products. Please try again later.');
+    } finally {
+        hideLoader();
+    }
+}
+
+// Display products in the grid
+function displayProducts(products) {
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = '';
+    
+    products.forEach(product => {
+        const card = createProductCard(product);
+        grid.appendChild(card);
+    });
+}
+
+// Create a product card element
+function createProductCard(product) {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    
+    // Determine stock status
+    let stockBadge = '';
+    let stockClass = '';
+    if (product.stock_quantity <= 0) {
+        stockBadge = '<span class="stock-badge out-of-stock">Out of Stock</span>';
+        stockClass = 'out-of-stock';
+    } else if (product.stock_quantity < 10) {
+        stockBadge = `<span class="stock-badge low-stock">Only ${product.stock_quantity} left</span>`;
+    } else {
+        stockBadge = '<span class="stock-badge in-stock">In Stock</span>';
+    }
+    
+    card.innerHTML = `
+        <div class="product-image">
+            <img src="${product.image_url || 'images/placeholder.jpg'}" alt="${product.product_name}" onerror="this.src='images/placeholder.jpg'">
+        </div>
+        <div class="product-info">
+            <div class="product-name">${product.product_name}</div>
+            ${stockBadge}
+            <div class="product-price">GH₵${parseFloat(product.price).toFixed(2)}${product.unit !== 'piece' ? '/' + product.unit : ''}</div>
+            <button class="add-btn" 
+                    data-id="${product.product_id}"
+                    data-name="${product.product_name}" 
+                    data-price="${product.price}"
+                    ${stockClass === 'out-of-stock' ? 'disabled style="background-color: #ccc; cursor: not-allowed;"' : ''}>
+                ${stockClass === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+        </div>
+    `;
+    
+    // Add click handler for add to cart button
+    const addBtn = card.querySelector('.add-btn');
+    if (stockClass !== 'out-of-stock') {
+        addBtn.addEventListener('click', function() {
+            const item = {
+                product_id: this.getAttribute('data-id'),
+                name: this.getAttribute('data-name'),
+                price: this.getAttribute('data-price'),
+                quantity: 1
+            };
+            
+            Cart.add(item);
+            
+            // Visual feedback
+            const originalText = this.innerText;
+            this.innerText = "✓ Added!";
+            this.classList.add('added');
+            
+            setTimeout(() => {
+                this.innerText = originalText;
+                this.classList.remove('added');
+            }, 1000);
+        });
+    }
+    
+    return card;
+}
+
+// Show error message
+function showError(message) {
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = `<div class="error-message">${message}</div>`;
+}
+
+// Hide loader
+function hideLoader() {
+    const loader = document.getElementById('loader-wrapper');
+    loader.classList.add('loader-hidden');
+    setTimeout(() => {
+        loader.style.display = 'none';
+    }, 500);
+}
+
+// Initialize page
+window.addEventListener('load', function() {
+    Cart.updateUI();
+    loadProducts();
+});
+</script>
+</body>
+</html>
