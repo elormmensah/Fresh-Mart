@@ -1,6 +1,7 @@
 // js/api-client.js - Frontend API Client
-// Configuration
-const API_BASE_URL = 'http://localhost/freshmart/api'; // Change this to your actual API URL
+// Configuration - CHANGE THIS TO YOUR LARAGON URL
+const API_BASE_URL = 'http://freshmart.test/api'; // For Laragon
+// const API_BASE_URL = 'http://localhost/freshmart/api'; // Alternative
 
 // API Helper Functions
 const API = {
@@ -66,19 +67,11 @@ const API = {
         updateProfile: (profileData) => API.request('/users.php?action=profile', {
             method: 'PUT',
             body: JSON.stringify(profileData)
-        }),
-        getAddresses: () => API.request('/users.php?action=addresses'),
-        addAddress: (addressData) => API.request('/users.php?action=addresses', {
-            method: 'POST',
-            body: JSON.stringify(addressData)
-        }),
-        deleteAddress: (addressId) => API.request(`/users.php?action=addresses&address_id=${addressId}`, {
-            method: 'DELETE'
         })
     }
 };
 
-// Cart Management (using localStorage for now, can be moved to backend later)
+// Cart Management (localStorage for now)
 const Cart = {
     get: () => JSON.parse(localStorage.getItem('myCart')) || [],
     
@@ -113,7 +106,11 @@ const Cart = {
     
     getTotal: () => {
         const cart = Cart.get();
-        return cart.reduce((total, item) => total + parseFloat(item.price), 0);
+        return cart.reduce((total, item) => {
+            const price = parseFloat(item.price);
+            const quantity = parseInt(item.quantity) || 1;
+            return total + (price * quantity);
+        }, 0);
     }
 };
 
